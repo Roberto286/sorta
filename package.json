@@ -5,8 +5,10 @@
 	"type": "commonjs",
 	"main": "core/index.js",
 	"scripts": {
-		"start": "node src/index.js",
-		"dev": "node --watch src/index.js"
+		"start": "node dist/core.js",
+		"dev": "node --watch dist/core.js",
+		"build": "npx esbuild scriptable/index.ts --bundle --platform=neutral --outfile=dist/sorta.js",
+		"lint": "biome lint --write scriptable && biome lint --write core"
 	},
 	"keywords": [],
 	"author": "",

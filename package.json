@@ -2,10 +2,11 @@
 	"name": "sorta",
 	"version": "1.0.0",
 	"description": "",
-	"type": "module",
-	"main": "index.js",
+	"type": "commonjs",
+	"main": "core/index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"start": "node src/index.js",
+		"dev": "node --watch src/index.js"
 	},
 	"keywords": [],
 	"author": "",

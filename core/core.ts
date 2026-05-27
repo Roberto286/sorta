@@ -47,28 +47,61 @@ export function extractReminders({
 	);
 }
 
-export function buildSystemPrompt({
-	taskToMove,
-	availableLists,
-}: {
-	taskToMove: Reminder;
-	availableLists: List[];
-}) {
-	return `
-	You are a task categorization assistant. Analyze the task and return ONLY a 
-single line in this exact format, nothing else:
+export function buildGeminiSystemPrompt(availableLists: List[]) {
+	return `You are a task categorization assistant. You receive a JSON object containing a list of todo items and available reminder lists.
 
-LIST: <list name> | TITLE: <cleaned task title>
+Your task:
+1. Analyze each todo and assign it to the most appropriate list from the available ones.
+2. Assign relevant tags to each todo.
+3. Return ONLY a valid JSON array. No markdown, no explanations, no code blocks.
+
+The output JSON array must contain objects with these exact fields:
+- identifier: string (preserve from input)
+- title: string (cleaned up, concise action)
+- list: string (must be one of the available lists)
+- tags: string[] (relevant tags)
+
+Available lists: [${availableLists.join(", ")}]
 
 Rules:
-- LIST must be one of the following (pick the best match, never invent new ones):
-[${availableLists.join(", ")}]
+- Never invent new list names. If no list fits perfectly, pick the most generic one.
+- Tags should be lowercase, single words or short phrases.
+- Keep the original identifier unchanged.
+- Clean up titles by removing filler words and fixing typos.
+- Respond in the same language as the task titles.`;
+}
 
-- TITLE: rewrite the task as a clean, concise action (remove filler words, fix typos)
-- If no list matches, use the most generic one available
-- Respond in the same language as the task
+export function buildGeminiPayload(
+	reminders: Reminder[],
+	availableLists: List[],
+) {
+	const todos = reminders.map((r) => ({
+		identifier: r.identifier,
+		title: r.title,
+		notes: r.notes,
+		creationDate: r.creationDate,
+	}));
+	return {
+		todos,
+		availableLists,
+	};
+}
 
-Task to analyze:
-[${taskToMove.title}]
-`;
+export function buildGeminiResponseSchema() {
+	return {
+		type: "array",
+		items: {
+			type: "object",
+			properties: {
+				identifier: { type: "string" },
+				title: { type: "string" },
+				list: { type: "string" },
+				tags: {
+					type: "array",
+					items: { type: "string" },
+				},
+			},
+			required: ["identifier", "title", "list", "tags"],
+		},
+	};
 }

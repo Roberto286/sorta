@@ -56,6 +56,7 @@ Your task:
 The output JSON object must have a single property "enrichedTodos" containing an array of objects with these exact fields:
 - identifier: string (preserve from input)
 - title: string (cleaned up, concise action)
+- originalTitle: string (the exact original title from input, used to find the reminder in Shortcuts)
 - list: string (must be one of the available lists)
 - tags: string[] (tag set described below)
 Available lists: [${availableLists.join(", ")}]
@@ -90,21 +91,28 @@ export function buildGeminiPayload(
 
 export function buildGeminiResponseSchema() {
 	return {
-		type: "array",
-		items: {
-			type: "object",
-			properties: {
-				identifier: { type: "string" },
-				title: { type: "string" },
-				list: { type: "string" },
-				tags: {
-					type: "array",
-					items: { type: "string" },
-					description:
-						"Must contain exactly 1 time estimate tag [10min, 20min, 30min] and optionally 'al-telefono' if the task is doable from the phone. No other tags allowed.",
+		type: "object",
+		properties: {
+			enrichedTodos: {
+				type: "array",
+				items: {
+					type: "object",
+					properties: {
+						identifier: { type: "string" },
+						title: { type: "string" },
+						originalTitle: { type: "string" },
+						list: { type: "string" },
+						tags: {
+							type: "array",
+							items: { type: "string" },
+							description:
+								"Must contain exactly 1 time estimate tag [10min, 20min, 30min] and optionally 'al-telefono' if the task is doable from the phone. No other tags allowed.",
+						},
+					},
+					required: ["identifier", "title", "originalTitle", "list", "tags"],
 				},
 			},
-			required: ["identifier", "title", "list", "tags"],
 		},
+		required: ["enrichedTodos"],
 	};
 }

@@ -53,7 +53,7 @@ async function callGemini(
 	return response;
 }
 
-function parseGeminiResponse(response: unknown): unknown[] {
+function parseGeminiResponse(response: unknown): Record<string, unknown> {
 	if (!response || typeof response !== "object") {
 		throw new Error(
 			`Invalid Gemini response: not an object. Got: ${JSON.stringify(response)}`,
@@ -91,7 +91,18 @@ function parseGeminiResponse(response: unknown): unknown[] {
 		throw new Error("Invalid Gemini response: text is not a string");
 	}
 
-	return JSON.parse(text);
+	const parsed = JSON.parse(text);
+	if (
+		!parsed ||
+		typeof parsed !== "object" ||
+		!Array.isArray((parsed as Record<string, unknown>).enrichedTodos)
+	) {
+		throw new Error(
+			`Invalid Gemini response: expected object with "enrichedTodos" array. Got: ${text}`,
+		);
+	}
+
+	return parsed as Record<string, unknown>;
 }
 
 async function run() {
@@ -119,7 +130,7 @@ async function run() {
 		});
 
 		if (remindersInInbox.length === 0) {
-			Script.setShortcutOutput(JSON.stringify([]));
+			Script.setShortcutOutput(JSON.stringify({ enrichedTodos: [] }));
 			return;
 		}
 

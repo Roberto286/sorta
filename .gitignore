@@ -1,3 +1,4 @@
 node_modules/
 mocks/
 dist/
+.DS_Store

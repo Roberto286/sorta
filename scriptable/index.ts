@@ -5,7 +5,7 @@ type ShortcutInput = {
 	model?: string;
 };
 
-const DEFAULT_MODEL = "gemini-2.5-flash-lite-preview-06-17";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 function getShortcutInput(): ShortcutInput | undefined {
 	return args.shortcutParameter as ShortcutInput | undefined;
@@ -55,12 +55,25 @@ async function callGemini(
 
 function parseGeminiResponse(response: unknown): unknown[] {
 	if (!response || typeof response !== "object") {
-		throw new Error("Invalid Gemini response: not an object");
+		throw new Error(
+			`Invalid Gemini response: not an object. Got: ${JSON.stringify(response)}`,
+		);
 	}
 
-	const candidates = (response as Record<string, unknown>).candidates;
+	const responseObj = response as Record<string, unknown>;
+
+	// Check for API error responses first
+	if (responseObj.error) {
+		const error = responseObj.error as Record<string, unknown>;
+		const errorMessage = error.message || error.status || JSON.stringify(error);
+		throw new Error(`Gemini API error: ${errorMessage}`);
+	}
+
+	const candidates = responseObj.candidates;
 	if (!Array.isArray(candidates) || candidates.length === 0) {
-		throw new Error("Invalid Gemini response: no candidates");
+		throw new Error(
+			`Invalid Gemini response: no candidates. Full response: ${JSON.stringify(response)}`,
+		);
 	}
 
 	const content = (candidates[0] as Record<string, unknown>).content;
